@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway"
+	xmlns:anypoint-mq="http://www.mulesoft.org/schema/mule/anypoint-mq"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd 
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/anypoint-mq http://www.mulesoft.org/schema/mule/anypoint-mq/current/mule-anypoint-mq.xsd">
+	<apikit:config name="anz-cpb-sfdc-cosmos-int-config" api="anz-cpb-sfdc-cosmos-int.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+	<!-- DISABLED LISTENER -->
+	<!-- <http:listener-config name="anz-cpb-sfdc-cosmos-int-httpListenerConfig">
+        <http:listener-connection host="${https.listener.host}" port="${https.private.port}" tlsContext="Internal_TLS_Context" protocol="HTTPS" connectionIdleTimeout="${https.listener.connectionIdleTimeout}"/>
+    </http:listener-config> -->
+	<tls:context name="Internal_TLS_Context"
+		doc:name="TLS Context" doc:id="84bf0ca5-bb59-459d-b8af-4a0dc05a8013">
+		<tls:trust-store insecure="true" />
+		<tls:key-store type="jks"
+			path="keystore/internal-${mule.env}.jks"
+			keyPassword="${secure::mule.internal.keystore.password}"
+			password="${secure::mule.internal.keystore.password}" />
+	</tls:context>
+	<!-- <api-gateway:autodiscovery apiId="${api.id}" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="6cd1ea02-c982-4e03-a18e-2b629144a318" flowRef="anz-cpb-sfdc-cosmos-int-main" /> -->
+	<configuration-properties doc:name="Configuration properties" doc:id="9de5839c-bbe7-472f-af89-dea5dbf2012d" file="properties/${mule.env}.properties" />
+    <secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="5a85b468-1156-4888-af4b-77f24ae42ccf" file="properties/${mule.env}_secure.properties" key="${mule.key}">
+        <secure-properties:encrypt algorithm="Blowfish" />
+    </secure-properties:config>
+    <secure-properties:config name="Secure_Properties_Config_KeyStore" doc:name="Secure Properties Config" doc:id="ba51b959-54b1-441b-ac8f-bd40f3c12639" file="properties/internal_secure.properties" key="${mule.internal.keystore.key}">
+        <secure-properties:encrypt algorithm="Blowfish" />
+    </secure-properties:config>
+    <json-logger:config name="JSON_Logger_Config" doc:name="JSON Logger Config" doc:id="4d6be526-bf34-41c1-9dc2-f757a74d65f9">
+        <json-logger:external-destination>
+            <json-logger:amq-destination clientId="${secure::json.logger.defaults.clientID}" />
+        </json-logger:external-destination>
+    </json-logger:config>
+    <salesforce:sfdc-config name="anz-cpb-sfdc-cosmos-int-salesforce-config" doc:name="Salesforce Config" doc:id="4b8aa102-de78-4023-bd41-cd3653cccdf5">
+		<salesforce:jwt-connection consumerKey="${secure::salesforce.consumerKey}" keyStore="${salesforce.tls.keystore.file}" storePassword="${secure::salesforce.tls.keystore.password}" principal="${salesforce.username}" tokenEndpoint="${salesforce.oauth.tokenUrl}" audienceUrl="${salesforce.audienceUrl}" connectionTimeout="${salesforce.connectionTimeoutMillis}" connectionTimeoutUnit="MILLISECONDS">
+			<reconnection >
+				<reconnect frequency="${salesforce.reconnectFrequencyMillis}" count="${salesforce.reconnectMaxAttempts}" />
+			</reconnection>
+			<tls:context >
+				<tls:key-store path="${salesforce.tls.keystore.file}" keyPassword="${secure::salesforce.tls.keystore.password}" password="${secure::salesforce.tls.keystore.password}" type="jks"/>
+			</tls:context>
+		</salesforce:jwt-connection>
+	</salesforce:sfdc-config>
+	<configuration-properties doc:name="Configuration properties" doc:id="74a5140b-f60c-41e1-84b4-d3b5118fd154" file="properties/salesforce_obj_${mule.env}.yaml" />
+	<os:config name="objectStore-config-salesforce" doc:name="ObjectStore Config" doc:id="078ebc9a-b4bb-4eab-8c71-dad398c05997" />
+	<os:object-store name="objectStore-salesforce-AppID-Mappings" doc:name="Object store" doc:id="b60949e0-c48b-415e-a9d5-2b1733412a87" entryTtl="${config.objectStore.salesforce.entryTtl}" expirationIntervalUnit="SECONDS" config-ref="objectStore-config-salesforce" persistent="false"/>
+	<os:config name="objectStore-config-gcs-token" doc:name="ObjectStore Config" doc:id="6fad0100-4f35-4cd8-a7de-8c11268c7960" />
+	<os:object-store name="objectStore-gcs-token" doc:name="Object store" doc:id="285b671e-168a-47b3-a65e-6c40474ef569" entryTtl="${config.objectStore.gcs.token.entryTtl}" expirationIntervalUnit="SECONDS" config-ref="objectStore-config-salesforce" persistent="false"/>
+	<os:object-store name="objectstore-gcp-sa-key" doc:name="Object store" doc:id="302b27ba-5946-472e-b71d-95b5aaa28008" entryTtl="${config.objectStore.gcs.sa.key.entryTtl}" config-ref="objectStore-config-gcs-token"/>
+	<anypoint-mq:config name="Anypoint_MQ_Config" doc:name="Anypoint MQ Config" doc:id="d4f4d300-ca0c-4132-bf24-fced00d95dcd" >
+		<anypoint-mq:connection url="${sfdc.bulk.api.job.events.queue.url}" clientId="${secure::sfdc.bulk.api.job.events.queue.clientID}" clientSecret="${secure::sfdc.bulk.api.job.events.queue.clientSecret}" >
+			<reconnection >
+				<reconnect-forever frequency="${sfdc.bulk.api.job.events.queue.reconnectFrequencyMillis}" />
+			</reconnection>
+		</anypoint-mq:connection>
+	</anypoint-mq:config>
+	<anypoint-mq:circuit-breaker name="Circuit_breaker" tripTimeout="${sfdc.bulk.api.job.events.queue.circuit-breaker.tripTimeoutMillis}" doc:name="Circuit breaker" doc:id="1cf342ca-e15c-4977-8b53-c0da123dc652" onErrorTypes="${sfdc.bulk.api.job.events.queue.circuit-breaker.errorTypes}" errorsThreshold="${sfdc.bulk.api.job.events.queue.circuit-breaker.errorCountThreshold}"/>
+</mule>
