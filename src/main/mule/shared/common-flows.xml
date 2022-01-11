@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule
+	xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:spring="http://www.mulesoft.org/schema/mule/spring"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:cloudhub="http://www.mulesoft.org/schema/mule/cloudhub"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/cloudhub http://www.mulesoft.org/schema/mule/cloudhub/current/mule-cloudhub.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/spring http://www.mulesoft.org/schema/mule/spring/current/mule-spring.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd">
+	<sub-flow name="common-flows-send-error-response"
+		doc:id="e9eb62b8-87c5-43a3-9e04-a18bea44dbc4">
+		<flow-ref doc:name="Log - Error"
+			doc:id="3c0c8593-0bd7-454c-abfe-ce5eac6c2587"
+			name="common-flows-log-error" />
+		<ee:transform doc:name="Set Error Response"
+			doc:id="ee8d72d3-cf21-4bbf-bae9-adee8b2d15f7">
+			<ee:message>
+				<ee:set-payload resource="dw/common/send-error-reponse.dwl" />
+			</ee:message>
+			<ee:variables >
+			</ee:variables>
+		</ee:transform>
+		<json-logger:logger doc:name="Log - Response Logged"
+			doc:id="33db973c-eebf-446b-ba99-f2fc6531937b"
+			config-ref="JSON_Logger_Config" message='#[write(vars.errorResponse,"application/java") replace "\n" with("")]'
+			tracePoint="FLOW" priority="ERROR"/>
+	</sub-flow>
+	<sub-flow name="common-flows-log-error"
+		doc:id="51fb27de-35b9-4a1e-b9b9-a6261bb7c4df">
+		<ee:transform doc:name="Map Error For Logging"
+			doc:id="cec0584d-f095-4772-9706-61e435163f48">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable resource="dw/common/map-logging-format.dwl" variableName="customError" />
+			</ee:variables>
+		</ee:transform>
+		<json-logger:logger doc:name="Log - Error"
+			doc:id="d7453c0b-620b-4ef1-b644-907b7f4b1b88"
+			config-ref="JSON_Logger_Config"
+			message='#[write(vars.customError,"application/java") replace "\n" with("")]' tracePoint="EXCEPTION"
+			priority="ERROR">
+			<json-logger:content><![CDATA[#[import modules::JSONLoggerModule output application/json ---
+{
+    error: JSONLoggerModule::stringifyNonJSON(vars.customError) 
+}]]]></json-logger:content>
+		</json-logger:logger>
+	</sub-flow>
+</mule>
