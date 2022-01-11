@@ -13,7 +13,11 @@ categories:
   - title: 🎉 Major features and improvements
     labels:
       - major-enhancement
-      - major-rfe
+      - major
+  - title: 🎉 minor improvements
+    labels:
+      - minor-enhancement
+      - minor
   - title: 🐛 Major bug fixes
     labels:
       - major-bug
