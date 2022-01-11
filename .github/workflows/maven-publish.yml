@@ -58,6 +58,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+name: PR Labeler
 on:
   pull_request:
     branches: [ master ]
